@@ -1,0 +1,21 @@
+init: comienza
+-> PROC 0: CREAR PROCESO
+-> PROC 0: CREAR PROCESO
+init: termina
+-> FIN PROCESO 0
+-> C.CONTEXTO POR FIN: de 0 a 1
+yosoy (1): i 0
+yosoy (1): i 1
+yosoy (1): i 2
+yosoy (1): i 3
+yosoy (1): i 4
+yosoy (1): termina
+-> FIN PROCESO 1
+-> C.CONTEXTO POR FIN: de 1 a 2
+yosoy (2): i 0
+yosoy (2): i 1
+yosoy (2): i 2
+yosoy (2): i 3
+yosoy (2): i 4
+yosoy (2): termina
+-> FIN PROCESO 2
