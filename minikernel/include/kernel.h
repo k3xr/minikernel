@@ -37,6 +37,9 @@ typedef struct BCP_t {
     void * pila;			/* dir. inicial de la pila */
 	BCPptr siguiente;		/* puntero a otro BCP */
 	void *info_mem;			/* descriptor del mapa de memoria */
+	
+	int seg_bloqueo;		/* numero de segundos de bloqueo */
+	int inicio_bloqueo;
 } BCP;
 
 /*
@@ -70,6 +73,9 @@ BCP tabla_procs[MAX_PROC];
  */
 lista_BCPs lista_listos= {NULL, NULL};
 
+// Lista de procesos bloqueados
+lista_BCPs lista_procesos_bloqueados= {NULL, NULL};
+
 /*
  *
  * Definición del tipo que corresponde con una entrada en la tabla de
@@ -88,8 +94,16 @@ int sis_crear_proceso();
 int sis_terminar_proceso();
 int sis_escribir();
 
+// implementadas
 int sis_obtener_id_pr();
 int sis_dormir();
+int sis_tiempos_proceso();
+int sis_crear_mutex();
+int sis_abrir_mutex();
+int sis_lock();
+int sis_unlock();
+int sis_cerrar_mutex();
+int sis_leer_caracter();
 
 /*
  * Variable global que contiene las rutinas que realizan cada llamada
@@ -99,7 +113,14 @@ servicio tabla_servicios[NSERVICIOS]={
 					{sis_terminar_proceso},
 					{sis_escribir},
 					{sis_obtener_id_pr},
-					{sis_dormir}
+					{sis_dormir},
+					{sis_tiempos_proceso},
+					{sis_crear_mutex},
+					{sis_abrir_mutex},
+					{sis_lock},
+					{sis_unlock},
+					{sis_cerrar_mutex},
+					{sis_leer_caracter}
 				};
 
 #endif /* _KERNEL_H */
