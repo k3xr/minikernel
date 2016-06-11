@@ -339,9 +339,31 @@ int sis_obtener_id_pr(){
 
 // El proceso se queda bloqueado los segundos especificados
 int sis_dormir(){
-	unsigned int segundos;
-	segundos = (unsigned int)leer_registro(1);
+	int numSegundos, nivel_anterior;
+	numSegundos = (unsigned int)leer_registro(1);
+
+	// actualiza BCP con el num de segundos y cambia estado a bloqueado
+	p_proc_actual->estado = BLOQUEADO;
+	p_proc_actual->secs_bloqueo = numSegundos;
+	//p_proc_actual->inicio_bloqueo = contador_global;
+
+	// Guarda el nivel anterior de interrupcion y lo fija a 3
+	nivel_anterior = fijar_nivel_int(NIVEL_3);
 	
+	// 1. Saca de la lista de procesos listos el BCP del proceso
+	eliminar_elem(&lista_listos, p_proc_actual);
+
+	// 2. Inserta el BCP del proceso en la lista de bloqueados
+	insertar_ultimo(&lista_bloqueados, p_proc_actual);
+
+	// Restaura el nivel de interrupcion anterior
+	fijar_nivel_int(nivel_anterior);
+
+	// Cambio de contexto voluntario
+	BCP *p_proc_dormido = p_proc_actual;
+	p_proc_actual = planificador();
+	cambio_contexto(&(p_proc_dormido->contexto_regs), &(p_proc_actual->contexto_regs));
+
 	return 0;
 }
 

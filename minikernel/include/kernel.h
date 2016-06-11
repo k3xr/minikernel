@@ -38,7 +38,7 @@ typedef struct BCP_t {
 	BCPptr siguiente;		/* puntero a otro BCP */
 	void *info_mem;			/* descriptor del mapa de memoria */
 	
-	int seg_bloqueo;		/* numero de segundos de bloqueo */
+	int secs_bloqueo;		/* numero de segundos de bloqueo */
 	int inicio_bloqueo;
 } BCP;
 
@@ -72,6 +72,11 @@ BCP tabla_procs[MAX_PROC];
  * Variable global que representa la cola de procesos listos
  */
 lista_BCPs lista_listos= {NULL, NULL};
+
+/*
+ * Variable global que representa la cola de procesos bloqueados
+ */
+lista_BCPs lista_bloqueados = {NULL, NULL};
 
 // Lista de procesos bloqueados
 lista_BCPs lista_procesos_bloqueados= {NULL, NULL};
