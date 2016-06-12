@@ -440,6 +440,18 @@ int sis_crear_mutex(){
 		return -1;
 	}
 
+	// Comprueba numero de mutex
+	if(p_proc_actual->numMutex >= NUM_MUT_PROC){
+		return -2;
+	}
+
+	// Comprueba nombre único de mutex
+	int i;
+	for (i = 0; i < NUM_MUT; i++){
+
+	}
+
+
 	return 0;
 }
 

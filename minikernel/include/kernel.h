@@ -22,6 +22,9 @@
 #include "HAL.h"
 #include "llamsis.h"
 
+#define NO_RECURSIVO 0
+#define RECURSIVO 1
+
 /*
  *
  * Definicion del tipo que corresponde con el BCP.
@@ -42,7 +45,8 @@ typedef struct BCP_t {
 	int secs_bloqueo;		/* numero de segundos de bloqueo */
 	int veces_sistema;		/* numero de interr. en modo sistema */
 	int veces_usuario;		/* numero de interr. en modo usuario */
-	
+	int numMutex;			/* numero de mutex */
+
 } BCP;
 
 /*
