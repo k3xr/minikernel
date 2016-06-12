@@ -179,9 +179,11 @@ static void exc_arit(){
  */
 static void exc_mem(){
 
-	if (!viene_de_modo_usuario())
-		panico("excepcion de memoria cuando estaba dentro del kernel");
-
+	if(accesoParam == 0){
+		if (!viene_de_modo_usuario()){
+			panico("excepcion de memoria cuando estaba dentro del kernel");
+		}
+	}
 
 	printk("-> EXCEPCION DE MEMORIA EN PROC %d\n", p_proc_actual->id);
 	liberar_proceso();
@@ -208,14 +210,27 @@ static void int_reloj(){
 
 	printk("-> TRATANDO INT. DE RELOJ\n");
 
+	BCP *proceso_listo = lista_listos.primero;
+	
+	// Rellena contadores de usuario y sistema del proceso en ejecucion
+	if(proceso_listo != NULL){
+		if(viene_de_modo_usuario()){
+			p_proc_actual->veces_usuario++;
+		}
+		else{
+			p_proc_actual->veces_sistema++;
+		}
+	}
+
 	BCP *proceso_bloqueado = lista_bloqueados.primero;
 
 	// Incrementa contador de llamadas a int_reloj
 	numTicks++;
 	
+	// Comprueba si hay procesos que se pueden desbloquear
 	if (proceso_bloqueado != NULL) {
 
-		// Cálculo de tiempo de bloqueo
+		// Calculo de tiempo de bloqueo
 		int numTicksBloqueo = proceso_bloqueado->secs_bloqueo * TICK;
 		int ticksTranscurridos = numTicks - proceso_bloqueado->inicio_bloqueo;
 		
@@ -230,7 +245,6 @@ static void int_reloj(){
 			fijar_nivel_int(nivel_interrupciones);
 		}
 	}
-
     return;
 }
 
@@ -317,7 +331,11 @@ int sis_crear_proceso(){
 
 	printk("-> PROC %d: CREAR PROCESO\n", p_proc_actual->id);
 	prog=(char *)leer_registro(1);
+	
+	int nivel_interrupciones = fijar_nivel_int(NIVEL_3);
 	res=crear_tarea(prog);
+	fijar_nivel_int(nivel_interrupciones);
+
 	return res;
 }
 
@@ -392,10 +410,36 @@ int sis_dormir(){
 }
 
 int sis_tiempos_proceso(){
-	return 0;
+
+	struct tiempos_ejec *tiempos_ejecucion;
+
+	// Comprueba si existe argumento
+	tiempos_ejecucion = (struct tiempos_ejec *)leer_registro(1);
+
+	if(tiempos_ejecucion != NULL){
+		// Si hay argumento fija variable global
+		int nivel_interrupciones = fijar_nivel_int(NIVEL_3);
+		accesoParam = 1;
+		fijar_nivel_int(nivel_interrupciones);
+
+		// Rellena estructura con el tiempo de sistema y tiempo de usuario
+		tiempos_ejecucion->sistema = p_proc_actual->veces_sistema;
+		tiempos_ejecucion->usuario = p_proc_actual->veces_usuario;
+	}
+
+	return numTicks;
 }
 
 int sis_crear_mutex(){
+
+	char *nombre = (char *)leer_registro(1);
+	int tipo = (int)leer_registro(2);
+
+	// Comprueba tamaño de nombre
+	if(strlen(nombre) > MAX_NOM_MUT){
+		return -1;
+	}
+
 	return 0;
 }
 

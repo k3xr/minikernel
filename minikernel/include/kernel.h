@@ -40,6 +40,8 @@ typedef struct BCP_t {
 	
 	int inicio_bloqueo;		/* instante de bloqueo */
 	int secs_bloqueo;		/* numero de segundos de bloqueo */
+	int veces_sistema;		/* numero de interr. en modo sistema */
+	int veces_usuario;		/* numero de interr. en modo usuario */
 	
 } BCP;
 
@@ -85,6 +87,11 @@ lista_BCPs lista_bloqueados = {NULL, NULL};
 int numTicks = 0;
 
 /*
+ * Variable global que representa el acceso a zona de usuario en memoria
+ */
+int accesoParam = 0;
+
+/*
  *
  * Definición del tipo que corresponde con una entrada en la tabla de
  * llamadas al sistema.
@@ -93,6 +100,15 @@ int numTicks = 0;
 typedef struct{
 	int (*fservicio)();
 } servicio;
+
+/*
+ * Define cuántas veces se ha detectado que el proceso ejecuta en modo
+ * sistema y cuantas veces en modo usuario
+ */
+typedef struct tiempos_ejec {
+    int usuario;
+    int sistema;
+} tiempos_ejec;
 
 
 /*
