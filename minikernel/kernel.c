@@ -208,7 +208,30 @@ static void int_reloj(){
 
 	printk("-> TRATANDO INT. DE RELOJ\n");
 
-        return;
+	BCP *proceso_bloqueado = lista_bloqueados.primero;
+
+	// Incrementa contador de llamadas a int_reloj
+	numTicks++;
+	
+	if (proceso_bloqueado != NULL) {
+
+		// Cálculo de tiempo de bloqueo
+		int numTicksBloqueo = proceso_bloqueado->secs_bloqueo * TICK;
+		int ticksTranscurridos = numTicks - proceso_bloqueado->inicio_bloqueo;
+		
+		// Comprueba si el proceso se debe desbloquear
+		if(ticksTranscurridos >= numTicksBloqueo){
+			proceso_bloqueado->estado = LISTO;
+
+			// Proceso de desbloquea y pasa a estado listo
+			int nivel_interrupciones = fijar_nivel_int(NIVEL_3);
+			eliminar_elem(&lista_bloqueados, proceso_bloqueado);
+			insertar_ultimo(&lista_listos, proceso_bloqueado);
+			fijar_nivel_int(nivel_interrupciones);
+		}
+	}
+
+    return;
 }
 
 /*
@@ -339,13 +362,14 @@ int sis_obtener_id_pr(){
 
 // El proceso se queda bloqueado los segundos especificados
 int sis_dormir(){
-	unsigned int numSegundos, nivel_interrupciones;
+	unsigned int numSegundos;
+	int nivel_interrupciones;
 	numSegundos = (unsigned int)leer_registro(1);
 
 	// actualiza BCP con el num de segundos y cambia estado a bloqueado
 	p_proc_actual->estado = BLOQUEADO;
-	p_proc_actual->secs_bloqueo = numSegundos;
-	//p_proc_actual->inicio_bloqueo = contador_global;
+	p_proc_actual->inicio_bloqueo = numTicks;
+	p_proc_actual->secs_bloqueo = numSegundos;	
 
 	// Guarda el nivel anterior de interrupcion y lo fija a 3
 	nivel_interrupciones = fijar_nivel_int(NIVEL_3);

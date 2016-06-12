@@ -38,8 +38,9 @@ typedef struct BCP_t {
 	BCPptr siguiente;		/* puntero a otro BCP */
 	void *info_mem;			/* descriptor del mapa de memoria */
 	
+	int inicio_bloqueo;		/* instante de bloqueo */
 	int secs_bloqueo;		/* numero de segundos de bloqueo */
-	int inicio_bloqueo;
+	
 } BCP;
 
 /*
@@ -78,8 +79,10 @@ lista_BCPs lista_listos= {NULL, NULL};
  */
 lista_BCPs lista_bloqueados = {NULL, NULL};
 
-// Lista de procesos bloqueados
-lista_BCPs lista_procesos_bloqueados= {NULL, NULL};
+/*
+ * Variable global que representa el número de llamadas a int_reloj
+ */
+int numTicks = 0;
 
 /*
  *
