@@ -119,6 +119,10 @@ static void espera_int(){
 static BCP * planificador(){
 	while (lista_listos.primero==NULL)
 		espera_int();		/* No hay nada que hacer */
+
+	// Asigna rodaja al proceso
+	
+
 	return lista_listos.primero;
 }
 
@@ -134,7 +138,10 @@ static void liberar_proceso(){
 	liberar_imagen(p_proc_actual->info_mem); /* liberar mapa */
 
 	p_proc_actual->estado=TERMINADO;
+
+	int nivel_interrupciones = fijar_nivel_int(NIVEL_3);
 	eliminar_primero(&lista_listos); /* proc. fuera de listos */
+	fijar_nivel_int(nivel_interrupciones);
 
 	/* Realizar cambio de contexto */
 	p_proc_anterior=p_proc_actual;
@@ -220,6 +227,11 @@ static void int_reloj(){
 		else{
 			p_proc_actual->veces_sistema++;
 		}
+
+		// Comprueba si ha terminado rodaja de tiempo del proceso
+		// if(ha terminado rodaja){
+		// int_sw()
+		// }
 	}
 
 	BCP *proceso_bloqueado = lista_bloqueados.primero;
@@ -270,6 +282,13 @@ static void int_sw(){
 
 	printk("-> TRATANDO INT. SW\n");
 
+	// Interrupcion SW de planificacion
+	// Pone el proceso ejecutando al final de la cola de listos
+	BCP *proceso = lista_listos.primero;
+	int nivel_interrupciones = fijar_nivel_int(NIVEL_3);
+	eliminar_elem(&lista_listos, proceso);
+	insertar_ultimo(&lista_listos, proceso);
+	fijar_nivel_int(nivel_interrupciones);
 	return;
 }
 
@@ -280,6 +299,7 @@ static void int_sw(){
  *
  */
 static int crear_tarea(char *prog){
+
 	void * imagen, *pc_inicial;
 	int error=0;
 	int proc;
@@ -304,8 +324,10 @@ static int crear_tarea(char *prog){
 		p_proc->id=proc;
 		p_proc->estado=LISTO;
 
+		int nivel_interrupciones = fijar_nivel_int(NIVEL_3);
 		/* lo inserta al final de cola de listos */
 		insertar_ultimo(&lista_listos, p_proc);
+		fijar_nivel_int(nivel_interrupciones);
 		error= 0;
 	}
 	else
@@ -331,10 +353,7 @@ int sis_crear_proceso(){
 
 	printk("-> PROC %d: CREAR PROCESO\n", p_proc_actual->id);
 	prog=(char *)leer_registro(1);
-	
-	int nivel_interrupciones = fijar_nivel_int(NIVEL_3);
-	res=crear_tarea(prog);
-	fijar_nivel_int(nivel_interrupciones);
+	res=crear_tarea(prog);	
 
 	return res;
 }
