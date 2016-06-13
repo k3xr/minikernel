@@ -232,6 +232,7 @@ static void int_reloj(){
 		// Comprueba si ha terminado rodaja de tiempo del proceso
 		if(p_proc_actual->ticksRestantesRodaja <= 1){
 			// Si no le queda rodaja activa int SW de planificacion
+			idABloquear = p_proc_actual->id;
 			activar_int_SW();
 		}
 		else{
@@ -282,24 +283,27 @@ static void tratar_llamsis(){
 }
 
 /*
- * Tratamiento de interrupciuones software
+ * Tratamiento de interrupciones software
  */
 static void int_sw(){
 
 	printk("-> TRATANDO INT. SW\n");
 
 	// Interrupcion SW de planificacion
-	// Pone el proceso ejecutando al final de la cola de listos
-	BCP *proceso = lista_listos.primero;
-	int nivel_interrupciones = fijar_nivel_int(NIVEL_3);
-	eliminar_elem(&lista_listos, proceso);
-	insertar_ultimo(&lista_listos, proceso);
-	fijar_nivel_int(nivel_interrupciones);
+	// Comprueba que proceso en ejecución es el que se quiere bloquear
+	if(idABloquear == p_proc_actual->id){
+		// Pone el proceso ejecutando al final de la cola de listos
+		BCP *proceso = lista_listos.primero;
+		int nivel_interrupciones = fijar_nivel_int(NIVEL_3);
+		eliminar_elem(&lista_listos, proceso);
+		insertar_ultimo(&lista_listos, proceso);
+		fijar_nivel_int(nivel_interrupciones);
 
-	// Cambio de contexto por int sw de planificación
-	BCP *p_proc_bloqueado = p_proc_actual;
-	p_proc_actual = planificador();
-	cambio_contexto(&(p_proc_bloqueado->contexto_regs), &(p_proc_actual->contexto_regs));
+		// Cambio de contexto por int sw de planificación
+		BCP *p_proc_bloqueado = p_proc_actual;
+		p_proc_actual = planificador();
+		cambio_contexto(&(p_proc_bloqueado->contexto_regs), &(p_proc_actual->contexto_regs));
+	}
 
 	return;
 }

@@ -97,6 +97,12 @@ int numTicks = 0;
 int accesoParam = 0;
 
 /*
+ * Variable global que representa el id del proceso al que va
+ * dirigida la int sw de planificacion
+ */
+int idABloquear = 0;
+
+/*
  *
  * Definición del tipo que corresponde con una entrada en la tabla de
  * llamadas al sistema.
