@@ -61,10 +61,10 @@ ALGO COMENTE ESTA PARTE Y DESCOMENTE LA PRUEBA CORRESPONDIENTE */
 		printf("Error creando prueba_dormir\n");
 */
 
-/* PRUEBA DE LA LLAMADA TIEMPOS_PROCESO */
+/* PRUEBA DE LA LLAMADA TIEMPOS_PROCESO 
 	if (crear_proceso("prueba_tiempos")<0)
 		printf("Error creando prueba_tiempos\n");
-
+*/
 
 /* PRIMERA PRUEBA DE MUTEX
 	if (crear_proceso("prueba_mutex1")<0)
@@ -76,15 +76,15 @@ ALGO COMENTE ESTA PARTE Y DESCOMENTE LA PRUEBA CORRESPONDIENTE */
 		printf("Error creando prueba_mutex2\n");
 */
 
-/* PRIMERA PRUEBA DE ROUND-ROBIN
+/* PRIMERA PRUEBA DE ROUND-ROBIN 
 	if (crear_proceso("prueba_RR1")<0)
 		printf("Error creando prueba_RR1\n");
 */
 
-/* SEGUNDA PRUEBA DE ROUND-ROBIN
+/* SEGUNDA PRUEBA DE ROUND-ROBIN */
 	if (crear_proceso("prueba_RR2")<0)
 		printf("Error creando prueba_RR2\n");
-*/
+
 
 /* PRUEBA DEL TERMINAL
 	if (crear_proceso("prueba_term")<0)

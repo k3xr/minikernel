@@ -121,7 +121,8 @@ static BCP * planificador(){
 		espera_int();		/* No hay nada que hacer */
 
 	// Asigna rodaja al proceso
-	
+	BCP *proceso = lista_listos.primero;
+	proceso->ticksRestantesRodaja = TICKS_POR_RODAJA;
 
 	return lista_listos.primero;
 }
@@ -229,9 +230,14 @@ static void int_reloj(){
 		}
 
 		// Comprueba si ha terminado rodaja de tiempo del proceso
-		// if(ha terminado rodaja){
-		// int_sw()
-		// }
+		if(p_proc_actual->ticksRestantesRodaja <= 0){
+			// Si no le queda rodaja activa int SW de planificacion
+			activar_int_SW();
+		}
+		else{
+			// Resta tick de rodaja al proceso
+			p_proc_actual->ticksRestantesRodaja--;
+		}
 	}
 
 	BCP *proceso_bloqueado = lista_bloqueados.primero;
@@ -289,6 +295,12 @@ static void int_sw(){
 	eliminar_elem(&lista_listos, proceso);
 	insertar_ultimo(&lista_listos, proceso);
 	fijar_nivel_int(nivel_interrupciones);
+
+	// Cambio de contexto por int sw de planificación
+	BCP *p_proc_bloqueado = p_proc_actual;
+	p_proc_actual = planificador();
+	cambio_contexto(&(p_proc_bloqueado->contexto_regs), &(p_proc_actual->contexto_regs));
+
 	return;
 }
 

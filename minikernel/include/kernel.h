@@ -46,6 +46,7 @@ typedef struct BCP_t {
 	int veces_sistema;		/* numero de interr. en modo sistema */
 	int veces_usuario;		/* numero de interr. en modo usuario */
 	int numMutex;			/* numero de mutex */
+	int ticksRestantesRodaja; /* número de ticks restantes para terminar rodaja */
 
 } BCP;
 
