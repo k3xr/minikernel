@@ -230,7 +230,7 @@ static void int_reloj(){
 		}
 
 		// Comprueba si ha terminado rodaja de tiempo del proceso
-		if(p_proc_actual->ticksRestantesRodaja <= 0){
+		if(p_proc_actual->ticksRestantesRodaja <= 1){
 			// Si no le queda rodaja activa int SW de planificacion
 			activar_int_SW();
 		}
