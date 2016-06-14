@@ -131,7 +131,7 @@ typedef struct{
 } mutex;
 
 /*
- * Define el array de mutex
+ * Array de mutex
  */
 mutex array_mutex[NUM_MUT];
 
@@ -139,6 +139,16 @@ mutex array_mutex[NUM_MUT];
  * Variable global que indica el número de mutex existentes
  */
 int mutexExistentes = 0;
+
+/*
+ * Buffer de caracteres procesados del terminal
+ */
+char bufferCaracteres[TAM_BUF_TERM];
+
+/*
+ * Variable global que indica el número de caracteres en el buffer
+ */
+int caracteresEnBuffer = 0;
 
 /*
  * Prototipos de las rutinas que realizan cada llamada al sistema

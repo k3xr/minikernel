@@ -204,11 +204,20 @@ static void exc_mem(){
  */
 static void int_terminal(){
 	char car;
-
 	car = leer_puerto(DIR_TERMINAL);
 	printk("-> TRATANDO INT. DE TERMINAL %c\n", car);
 
-        return;
+	// si el buffer no está lleno introduce el caracter nuevo
+	if(caracteresEnBuffer < TAM_BUF_TERM){
+		int nivel_interrupciones = fijar_nivel_int(NIVEL_3);
+		bufferCaracteres[caracteresEnBuffer] = car;
+		caracteresEnBuffer++;
+		fijar_nivel_int(nivel_interrupciones);
+
+		// desbloquea procesos bloqueados
+
+	}
+    return;
 }
 
 /*
@@ -539,7 +548,24 @@ int sis_cerrar_mutex(){
 }
 
 int sis_leer_caracter(){
-	return 0;
+
+	// Si el buffer está vacío se bloquea
+	while(caracteresEnBuffer == 0){
+		
+	}
+	// Solicita el primer caracter del buffer
+	int nivel_interrupciones = fijar_nivel_int(NIVEL_3);
+	char car = bufferCaracteres[0];
+	caracteresEnBuffer--;
+
+	// Reordena el buffer
+	int i;
+	for (i = caracteresEnBuffer; i > 0; i--){
+		bufferCaracteres[i-1] = bufferCaracteres[i];
+	}
+	fijar_nivel_int(nivel_interrupciones);
+
+	return car;
 }
 
 /*
