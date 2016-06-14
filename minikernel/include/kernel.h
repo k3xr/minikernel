@@ -47,6 +47,7 @@ typedef struct BCP_t {
 	int veces_usuario;		/* numero de interr. en modo usuario */
 	int numMutex;			/* numero de mutex */
 	int ticksRestantesRodaja; /* número de ticks restantes para terminar rodaja */
+	int bloqueadoPorLectura;/* 1 indica que esta bloqueado por lectura de caracter */
 
 } BCP;
 
