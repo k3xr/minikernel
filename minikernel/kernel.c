@@ -105,7 +105,7 @@ static void eliminar_elem(lista_BCPs *lista, BCP * proc){
 static void espera_int(){
 	int nivel;
 
-	printk("-> NO HAY LISTOS. ESPERA INT\n");
+	//printk("-> NO HAY LISTOS. ESPERA INT\n");
 
 	/* Baja al mínimo el nivel de interrupción mientras espera */
 	nivel=fijar_nivel_int(NIVEL_1);
@@ -251,7 +251,7 @@ static void int_terminal(){
  */
 static void int_reloj(){
 
-	printk("-> TRATANDO INT. DE RELOJ\n");
+	//printk("-> TRATANDO INT. DE RELOJ\n");
 
 	BCP *proceso_listo = lista_listos.primero;
 	
@@ -585,11 +585,15 @@ int sis_leer_caracter(){
 		insertar_ultimo(&lista_bloqueados, p_proc_actual);
 		fijar_nivel_int(nivel_interrupciones);
 		p_proc_actual = planificador();
-}
+	}
+
+	int nivel_interrupciones = fijar_nivel_int(NIVEL_3);
+	accesoParam = 1;
+	fijar_nivel_int(nivel_interrupciones);
 
 	int i;
 	// Solicita el primer caracter del buffer
-	int nivel_interrupciones = fijar_nivel_int(NIVEL_2);
+	nivel_interrupciones = fijar_nivel_int(NIVEL_2);
 	char car = bufferCaracteres[0];
 	caracteresEnBuffer--;
 
