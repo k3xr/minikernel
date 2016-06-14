@@ -289,7 +289,8 @@ static void int_reloj(){
 		int ticksTranscurridos = numTicks - proceso_bloqueado->inicio_bloqueo;
 		
 		// Comprueba si el proceso se debe desbloquear
-		if(ticksTranscurridos >= numTicksBloqueo){
+		if(ticksTranscurridos >= numTicksBloqueo && 
+				proceso_bloqueado->bloqueadoPorLectura == 0){
 			proceso_bloqueado->estado = LISTO;
 
 			// Proceso de desbloquea y pasa a estado listo
@@ -583,16 +584,12 @@ int sis_leer_caracter(){
 		eliminar_elem(&lista_listos, p_proc_actual);
 		insertar_ultimo(&lista_bloqueados, p_proc_actual);
 		fijar_nivel_int(nivel_interrupciones);
-
-		// Cambio de contexto voluntario
-		//BCP *proceso_bloqueado = p_proc_actual;
 		p_proc_actual = planificador();
-		//cambio_contexto(&(proceso_bloqueado->contexto_regs), &(p_proc_actual->contexto_regs));
-	}
+}
 
 	int i;
 	// Solicita el primer caracter del buffer
-	int nivel_interrupciones = fijar_nivel_int(NIVEL_3);
+	int nivel_interrupciones = fijar_nivel_int(NIVEL_2);
 	char car = bufferCaracteres[0];
 	caracteresEnBuffer--;
 
