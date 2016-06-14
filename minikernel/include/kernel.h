@@ -123,6 +123,24 @@ typedef struct tiempos_ejec {
 
 
 /*
+ * Define un mutex
+ */
+typedef struct{
+    char *nombre; 	// nombre del mutex
+	int tipo;		// tipo del mutex (no recursivo = 0, recursivo = 1)
+} mutex;
+
+/*
+ * Define el array de mutex
+ */
+mutex array_mutex[NUM_MUT];
+
+/*
+ * Variable global que indica el número de mutex existentes
+ */
+int mutexExistentes = 0;
+
+/*
  * Prototipos de las rutinas que realizan cada llamada al sistema
  */
 int sis_crear_proceso();

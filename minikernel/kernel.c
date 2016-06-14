@@ -475,7 +475,7 @@ int sis_crear_mutex(){
 		return -1;
 	}
 
-	// Comprueba numero de mutex
+	// Comprueba número de mutex del proceso
 	if(p_proc_actual->numMutex >= NUM_MUT_PROC){
 		return -2;
 	}
@@ -483,9 +483,41 @@ int sis_crear_mutex(){
 	// Comprueba nombre único de mutex
 	int i;
 	for (i = 0; i < NUM_MUT; i++){
-
+		if(array_mutex[i].nombre != NULL && 
+			strcmp(array_mutex[i].nombre, nombre) == 0){
+			return -3;
+		}
 	}
 
+	// Compueba número de mutex en el sistema
+	while(mutexExistentes >= NUM_MUT){
+		// Bloquear proceso actual
+		p_proc_actual->estado = BLOQUEADO;
+		int nivel_interrupciones = fijar_nivel_int(NIVEL_3);
+		eliminar_elem(&lista_listos, p_proc_actual);
+		insertar_ultimo(&lista_bloqueados, p_proc_actual);
+		fijar_nivel_int(nivel_interrupciones);
+
+		// Cambio de contexto voluntario
+		BCP *proceso_bloqueado = p_proc_actual;
+		p_proc_actual = planificador();
+		cambio_contexto(&(proceso_bloqueado->contexto_regs), &(p_proc_actual->contexto_regs));
+	
+		// Vuelve a activarse y comprueba nombre único de mutex
+		for (i = 0; i < NUM_MUT; i++){
+			if(array_mutex[i].nombre != NULL && 
+				strcmp(array_mutex[i].nombre, nombre) == 0){
+				return -3;
+			}
+		}
+	}
+
+	int nivel_interrupciones = fijar_nivel_int(NIVEL_3);
+	mutex *mutexCreado = &(array_mutex[mutexExistentes]);
+	mutexCreado->nombre = nombre;
+	mutexCreado->tipo=tipo;
+	mutexExistentes++;
+	fijar_nivel_int(nivel_interrupciones);
 
 	return 0;
 }
