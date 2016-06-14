@@ -585,9 +585,9 @@ int sis_leer_caracter(){
 		fijar_nivel_int(nivel_interrupciones);
 
 		// Cambio de contexto voluntario
-		BCP *proceso_bloqueado = p_proc_actual;
+		//BCP *proceso_bloqueado = p_proc_actual;
 		p_proc_actual = planificador();
-		cambio_contexto(&(proceso_bloqueado->contexto_regs), &(p_proc_actual->contexto_regs));
+		//cambio_contexto(&(proceso_bloqueado->contexto_regs), &(p_proc_actual->contexto_regs));
 	}
 
 	int i;
