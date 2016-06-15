@@ -584,7 +584,11 @@ int sis_leer_caracter(){
 		eliminar_elem(&lista_listos, p_proc_actual);
 		insertar_ultimo(&lista_bloqueados, p_proc_actual);
 		fijar_nivel_int(nivel_interrupciones);
+
+		// Cambio de contexto voluntario		
+		BCP *proceso_bloqueado = p_proc_actual;
 		p_proc_actual = planificador();
+		cambio_contexto(&(proceso_bloqueado->contexto_regs), &(p_proc_actual->contexto_regs));
 	}
 
 	int nivel_interrupciones = fijar_nivel_int(NIVEL_3);
