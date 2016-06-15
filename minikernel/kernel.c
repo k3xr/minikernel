@@ -105,7 +105,7 @@ static void eliminar_elem(lista_BCPs *lista, BCP * proc){
 static void espera_int(){
 	int nivel;
 
-	//printk("-> NO HAY LISTOS. ESPERA INT\n");
+	printk("-> NO HAY LISTOS. ESPERA INT\n");
 
 	/* Baja al mínimo el nivel de interrupción mientras espera */
 	nivel=fijar_nivel_int(NIVEL_1);
@@ -251,7 +251,7 @@ static void int_terminal(){
  */
 static void int_reloj(){
 
-	//printk("-> TRATANDO INT. DE RELOJ\n");
+	printk("-> TRATANDO INT. DE RELOJ\n");
 
 	BCP *proceso_listo = lista_listos.primero;
 	
@@ -574,40 +574,42 @@ int sis_cerrar_mutex(){
 	return 0;
 }
 
-int sis_leer_caracter(){
+int sis_leer_caracter(){	
+	while(1){
+		// Si el buffer está vacío se bloquea
+		if(caracteresEnBuffer == 0){
+			p_proc_actual->estado = BLOQUEADO;
+			p_proc_actual->bloqueadoPorLectura = 1;
+			int nivel_interrupciones = fijar_nivel_int(NIVEL_3);
+			eliminar_elem(&lista_listos, p_proc_actual);
+			insertar_ultimo(&lista_bloqueados, p_proc_actual);
+			fijar_nivel_int(nivel_interrupciones);
 
-	// Si el buffer está vacío se bloquea
-	while(caracteresEnBuffer == 0){
-		p_proc_actual->estado = BLOQUEADO;
-		p_proc_actual->bloqueadoPorLectura = 1;
-		int nivel_interrupciones = fijar_nivel_int(NIVEL_3);
-		eliminar_elem(&lista_listos, p_proc_actual);
-		insertar_ultimo(&lista_bloqueados, p_proc_actual);
-		fijar_nivel_int(nivel_interrupciones);
+			// Cambio de contexto voluntario		
+			BCP *proceso_bloqueado = p_proc_actual;
+			p_proc_actual = planificador();
+			cambio_contexto(&(proceso_bloqueado->contexto_regs), &(p_proc_actual->contexto_regs));
+		}
+		else{
+			//int nivel_interrupciones = fijar_nivel_int(NIVEL_3);
+			//accesoParam = 1;
+			//fijar_nivel_int(nivel_interrupciones);
 
-		// Cambio de contexto voluntario		
-		BCP *proceso_bloqueado = p_proc_actual;
-		p_proc_actual = planificador();
-		cambio_contexto(&(proceso_bloqueado->contexto_regs), &(p_proc_actual->contexto_regs));
-	}
+			int i;
+			// Solicita el primer caracter del buffer
+			int nivel_interrupciones = fijar_nivel_int(NIVEL_2);
+			char car = bufferCaracteres[0];
+			caracteresEnBuffer--;
 
-	int nivel_interrupciones = fijar_nivel_int(NIVEL_3);
-	accesoParam = 1;
-	fijar_nivel_int(nivel_interrupciones);
+			// Reordena el buffer
+			for (i = 0; i < caracteresEnBuffer; i++){
+				bufferCaracteres[i] = bufferCaracteres[i+1];
+			}
+			fijar_nivel_int(nivel_interrupciones);
 
-	int i;
-	// Solicita el primer caracter del buffer
-	nivel_interrupciones = fijar_nivel_int(NIVEL_2);
-	char car = bufferCaracteres[0];
-	caracteresEnBuffer--;
-
-	// Reordena el buffer
-	for (i = caracteresEnBuffer; i > 0; i--){
-		bufferCaracteres[i-1] = bufferCaracteres[i];
-	}
-	fijar_nivel_int(nivel_interrupciones);
-
-	return (long)car;
+			return (long)car;
+		}
+	}	
 }
 
 /*
