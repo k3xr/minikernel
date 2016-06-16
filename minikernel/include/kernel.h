@@ -33,6 +33,14 @@
  */
 typedef struct BCP_t *BCPptr;
 
+/*
+ * Define un mutex
+ */
+typedef struct{
+    char *nombre; 	// nombre del mutex
+	int tipo;		// tipo del mutex (no recursivo = 0, recursivo = 1)
+} mutex;
+
 typedef struct BCP_t {
     int id;				/* ident. del proceso */
     int estado;			/* TERMINADO|LISTO|EJECUCION|BLOQUEADO*/
@@ -48,6 +56,7 @@ typedef struct BCP_t {
 	int numMutex;			/* numero de mutex */
 	int ticksRestantesRodaja; /* número de ticks restantes para terminar rodaja */
 	int bloqueadoPorLectura;/* 1 indica que esta bloqueado por lectura de caracter */
+	mutex *array_mutex_proceso[NUM_MUT_PROC]; /* Array de mutex del proceso */
 
 } BCP;
 
@@ -121,15 +130,6 @@ typedef struct tiempos_ejec {
     int usuario;
     int sistema;
 } tiempos_ejec;
-
-
-/*
- * Define un mutex
- */
-typedef struct{
-    char *nombre; 	// nombre del mutex
-	int tipo;		// tipo del mutex (no recursivo = 0, recursivo = 1)
-} mutex;
 
 /*
  * Array de mutex

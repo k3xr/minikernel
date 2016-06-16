@@ -508,19 +508,19 @@ int sis_crear_mutex(){
 	char *nombre = (char *)leer_registro(1);
 	int tipo = (int)leer_registro(2);
 
-	// Comprueba tamaño de nombre
-	if(strlen(nombre) > MAX_NOM_MUT){
+	// Comprueba número de mutex del proceso
+	if(p_proc_actual->numMutex >= NUM_MUT_PROC){
 		return -1;
 	}
 
-	// Comprueba número de mutex del proceso
-	if(p_proc_actual->numMutex >= NUM_MUT_PROC){
+	// Comprueba tamaño de nombre
+	if(strlen(nombre) > MAX_NOM_MUT){
 		return -2;
-	}
+	}	
 
 	// Comprueba nombre único de mutex
 	int i;
-	for (i = 0; i < NUM_MUT; i++){
+	for (i = 0; i < mutexExistentes; i++){
 		if(array_mutex[i].nombre != NULL && 
 			strcmp(array_mutex[i].nombre, nombre) == 0){
 			return -3;
@@ -542,9 +542,8 @@ int sis_crear_mutex(){
 		cambio_contexto(&(proceso_bloqueado->contexto_regs), &(p_proc_actual->contexto_regs));
 	
 		// Vuelve a activarse y comprueba nombre único de mutex
-		for (i = 0; i < NUM_MUT; i++){
-			if(array_mutex[i].nombre != NULL && 
-				strcmp(array_mutex[i].nombre, nombre) == 0){
+		for (i = 0; i < mutexExistentes; i++){
+			if(array_mutex[i].nombre != NULL && strcmp(array_mutex[i].nombre, nombre) == 0){
 				return -3;
 			}
 		}
@@ -557,11 +556,34 @@ int sis_crear_mutex(){
 	mutexExistentes++;
 	fijar_nivel_int(nivel_interrupciones);
 
-	return 0;
+	int df = p_proc_actual->numMutex; // Descriptor
+	p_proc_actual->array_mutex_proceso[p_proc_actual->numMutex] = &array_mutex[mutexExistentes-1];
+	p_proc_actual->numMutex++;
+
+	return df;
 }
 
 int sis_abrir_mutex(){
-	return 0;
+
+	char *nombre = (char *)leer_registro(1);
+	
+	// Comprueba número de mutex del proceso
+	if(p_proc_actual->numMutex >= NUM_MUT_PROC){
+		return -1;
+	}
+	
+	int i;
+	int df = -4; // Descriptor
+	for (i = 0; i < mutexExistentes; i++){
+		if(array_mutex[i].nombre != NULL && strcmp(array_mutex[i].nombre, nombre) == 0){
+			// Mutex encontrado
+			df = p_proc_actual->numMutex; // Descriptor
+			p_proc_actual->array_mutex_proceso[p_proc_actual->numMutex] = &array_mutex[i];
+			p_proc_actual->numMutex++;
+			break;
+		}
+	}
+	return df;
 }
 
 int sis_lock(){
