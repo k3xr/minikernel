@@ -209,10 +209,8 @@ static void int_terminal(){
 
 	// si el buffer no está lleno introduce el caracter nuevo
 	if(caracteresEnBuffer < TAM_BUF_TERM){
-		int nivel_interrupciones = fijar_nivel_int(NIVEL_3);
 		bufferCaracteres[caracteresEnBuffer] = car;
-		caracteresEnBuffer++;
-		
+		caracteresEnBuffer++;		
 
 		// desbloquea procesos bloqueados
 		BCP *proceso_bloqueado = lista_bloqueados.primero;
@@ -224,8 +222,10 @@ static void int_terminal(){
 				desbloqueado = 1;
 				proceso_bloqueado->estado = LISTO;
 				proceso_bloqueado->bloqueadoPorLectura = 0;
+				int nivel_interrupciones = fijar_nivel_int(NIVEL_3);
 				eliminar_elem(&lista_bloqueados, proceso_bloqueado);
 				insertar_ultimo(&lista_listos, proceso_bloqueado);
+				fijar_nivel_int(nivel_interrupciones);
 			}
 		}
 		
@@ -236,12 +236,14 @@ static void int_terminal(){
 				desbloqueado = 1;
 				proceso_bloqueado->estado = LISTO;
 				proceso_bloqueado->bloqueadoPorLectura = 0;
+				int nivel_interrupciones = fijar_nivel_int(NIVEL_3);
 				eliminar_elem(&lista_bloqueados, proceso_bloqueado);
 				insertar_ultimo(&lista_listos, proceso_bloqueado);
+				fijar_nivel_int(nivel_interrupciones);
 			}
 		}
 
-		fijar_nivel_int(nivel_interrupciones);
+		
 	}
     return;
 }
@@ -585,10 +587,12 @@ int sis_leer_caracter(){
 			insertar_ultimo(&lista_bloqueados, p_proc_actual);
 			fijar_nivel_int(nivel_interrupciones);
 
+			nivel_interrupciones = fijar_nivel_int(NIVEL_2);
 			// Cambio de contexto voluntario		
 			BCP *proceso_bloqueado = p_proc_actual;
 			p_proc_actual = planificador();
 			cambio_contexto(&(proceso_bloqueado->contexto_regs), &(p_proc_actual->contexto_regs));
+			fijar_nivel_int(nivel_interrupciones);
 		}
 		else{
 			//int nivel_interrupciones = fijar_nivel_int(NIVEL_3);
