@@ -136,6 +136,64 @@ static BCP * planificador(){
 static void liberar_proceso(){
 	BCP * p_proc_anterior;
 
+ 	// Elimina mutex abierto de lista global
+	int i;
+	for (i = 0; i < NUM_MUT_PROC; i++){
+		int j;
+		for(j = 0; j < NUM_MUT; j++){
+			
+			if (p_proc_actual->array_mutex_proceso[i] != NULL &&
+					array_mutex[j].nombre != NULL &&
+					strcmp(array_mutex[j].nombre, p_proc_actual->array_mutex_proceso[i]->nombre) == 0){
+				array_mutex[j].procesos[p_proc_actual->id] = 0;
+				int cerrarMutex = 1;
+				int k;
+
+				for (k = 0; k < MAX_PROC && cerrarMutex == 1; k++){
+					if(array_mutex[j].procesos[k] == 1){
+						cerrarMutex = 0;
+					}
+				}
+
+				if(cerrarMutex == 1){			
+					// Eliminar el mutex global
+					mutexExistentes--;
+					array_mutex[j].nombre = NULL;
+
+					// Desbloquea primer proceso esperando para crear mutex
+					BCP *proceso_bloqueado = lista_bloqueados.primero;
+		
+					int desbloqueado = 0;
+					if (proceso_bloqueado != NULL){
+						if(proceso_bloqueado->bloqueadoCreandoMutex == 1){
+							desbloqueado = 1;
+							proceso_bloqueado->estado = LISTO;
+							proceso_bloqueado->bloqueadoCreandoMutex = 0;
+							int nivel_interrupciones = fijar_nivel_int(NIVEL_3);
+							eliminar_elem(&lista_bloqueados, proceso_bloqueado);
+							insertar_ultimo(&lista_listos, proceso_bloqueado);
+							fijar_nivel_int(nivel_interrupciones);
+						}
+					}
+						
+					while(desbloqueado != 1 && proceso_bloqueado != lista_bloqueados.ultimo){
+						proceso_bloqueado = proceso_bloqueado->siguiente;
+						if(proceso_bloqueado->bloqueadoCreandoMutex == 1){
+							desbloqueado = 1;
+							proceso_bloqueado->estado = LISTO;
+							proceso_bloqueado->bloqueadoCreandoMutex = 0;
+							int nivel_interrupciones = fijar_nivel_int(NIVEL_3);
+							eliminar_elem(&lista_bloqueados, proceso_bloqueado);
+							insertar_ultimo(&lista_listos, proceso_bloqueado);
+							fijar_nivel_int(nivel_interrupciones);
+						}
+					}
+				}
+				break;
+			}
+		}
+	}
+
 	liberar_imagen(p_proc_actual->info_mem); /* liberar mapa */
 
 	p_proc_actual->estado=TERMINADO;
@@ -212,7 +270,7 @@ static void int_terminal(){
 		bufferCaracteres[caracteresEnBuffer] = car;
 		caracteresEnBuffer++;		
 
-		// desbloquea procesos bloqueados
+		// desbloquea primer proceso bloqueado por lectura
 		BCP *proceso_bloqueado = lista_bloqueados.primero;
 	
 		int desbloqueado = 0;
@@ -242,8 +300,6 @@ static void int_terminal(){
 				fijar_nivel_int(nivel_interrupciones);
 			}
 		}
-
-		
 	}
     return;
 }
@@ -292,7 +348,8 @@ static void int_reloj(){
 		
 		// Comprueba si el proceso se debe desbloquear
 		if(ticksTranscurridos >= numTicksBloqueo && 
-				proceso_bloqueado->bloqueadoPorLectura == 0){
+				proceso_bloqueado->bloqueadoPorLectura == 0 &&
+				proceso_bloqueado->bloqueadoCreandoMutex == 0){
 			proceso_bloqueado->estado = LISTO;
 
 			// Proceso de desbloquea y pasa a estado listo
@@ -520,7 +577,7 @@ int sis_crear_mutex(){
 
 	// Comprueba nombre único de mutex
 	int i;
-	for (i = 0; i < mutexExistentes; i++){
+	for (i = 0; i < NUM_MUT; i++){
 		if(array_mutex[i].nombre != NULL && 
 			strcmp(array_mutex[i].nombre, nombre) == 0){
 			return -3;
@@ -528,9 +585,11 @@ int sis_crear_mutex(){
 	}
 
 	// Compueba número de mutex en el sistema
-	while(mutexExistentes >= NUM_MUT){
+	while(mutexExistentes == NUM_MUT){
 		// Bloquear proceso actual
 		p_proc_actual->estado = BLOQUEADO;
+		p_proc_actual->bloqueadoCreandoMutex = 1;
+
 		int nivel_interrupciones = fijar_nivel_int(NIVEL_3);
 		eliminar_elem(&lista_listos, p_proc_actual);
 		insertar_ultimo(&lista_bloqueados, p_proc_actual);
@@ -539,26 +598,45 @@ int sis_crear_mutex(){
 		// Cambio de contexto voluntario
 		BCP *proceso_bloqueado = p_proc_actual;
 		p_proc_actual = planificador();
-		cambio_contexto(&(proceso_bloqueado->contexto_regs), &(p_proc_actual->contexto_regs));
-	
+		cambio_contexto(&(proceso_bloqueado->contexto_regs), &(p_proc_actual->contexto_regs));	
+
 		// Vuelve a activarse y comprueba nombre único de mutex
-		for (i = 0; i < mutexExistentes; i++){
-			if(array_mutex[i].nombre != NULL && strcmp(array_mutex[i].nombre, nombre) == 0){
+		for (i = 0; i < NUM_MUT; i++){
+			if(array_mutex[i].nombre != NULL && 
+				strcmp(array_mutex[i].nombre, nombre) == 0){
 				return -3;
 			}
 		}
+
 	}
 
+	// Crea nuevo mutex
 	int nivel_interrupciones = fijar_nivel_int(NIVEL_3);
-	mutex *mutexCreado = &(array_mutex[mutexExistentes]);
-	mutexCreado->nombre = nombre;
-	mutexCreado->tipo=tipo;
+	// Busca espacio libre para nuevo mutex
+	int posMutex;
+	for (i = 0; i < NUM_MUT; i++){
+		if(array_mutex[i].nombre == NULL){
+			mutex *mutexCreado = &(array_mutex[i]);
+			mutexCreado->nombre = strdup(nombre);
+			mutexCreado->tipo=tipo;
+			posMutex = i;
+			break;
+		}
+	}
+	
 	mutexExistentes++;
 	fijar_nivel_int(nivel_interrupciones);
 
-	int df = p_proc_actual->numMutex; // Descriptor
-	p_proc_actual->array_mutex_proceso[p_proc_actual->numMutex] = &array_mutex[mutexExistentes-1];
-	p_proc_actual->numMutex++;
+	// Busca descriptor libre para mutex
+	int df = -4; // Descriptor
+	for (i = 0; i < NUM_MUT_PROC; i++){
+		if(p_proc_actual->array_mutex_proceso[i] == NULL){
+			p_proc_actual->array_mutex_proceso[i] = &array_mutex[posMutex];
+			p_proc_actual->numMutex++;
+			df = i;
+			break;
+		}
+	}
 
 	return df;
 }
@@ -568,22 +646,70 @@ int sis_abrir_mutex(){
 	char *nombre = (char *)leer_registro(1);
 	
 	// Comprueba número de mutex del proceso
-	if(p_proc_actual->numMutex >= NUM_MUT_PROC){
+	if(p_proc_actual->numMutex == NUM_MUT_PROC){
 		return -1;
 	}
 	
 	int i;
-	int df = -4; // Descriptor
-	for (i = 0; i < mutexExistentes; i++){
+	int posMutex = -2;
+	int nivel_interrupciones = fijar_nivel_int(NIVEL_3);
+	for (i = 0; i < NUM_MUT; i++){
 		if(array_mutex[i].nombre != NULL && strcmp(array_mutex[i].nombre, nombre) == 0){
 			// Mutex encontrado
-			df = p_proc_actual->numMutex; // Descriptor
-			p_proc_actual->array_mutex_proceso[p_proc_actual->numMutex] = &array_mutex[i];
-			p_proc_actual->numMutex++;
+			array_mutex[i].procesos[p_proc_actual->id] = 1;
+			posMutex = i;
 			break;
 		}
 	}
+
+	if(posMutex == -2){
+		// No existe mutex con ese nombre
+		return -2;
+	}
+
+	// Busca descriptor libre para mutex
+	int df = -4; // Descriptor
+	for (i = 0; i < NUM_MUT_PROC; i++){
+		if(p_proc_actual->array_mutex_proceso[i] == NULL){
+			p_proc_actual->array_mutex_proceso[i] = &array_mutex[posMutex];
+			p_proc_actual->numMutex++;
+			df = i;
+			break;
+		}
+	}
+
+	fijar_nivel_int(nivel_interrupciones);
+
 	return df;
+}
+
+int sis_cerrar_mutex(){
+
+	// Descriptor del mutex que se debe cerrar
+	unsigned int mutexId = (unsigned int)leer_registro(1);
+
+	// Comprueba que el mutex existe
+	if(p_proc_actual->array_mutex_proceso[mutexId] == NULL){
+		return -1;
+	}
+	
+	// Elimina contador de mutex abierto en proceso en array global de mutex
+	int i;
+	int nivel_interrupciones = fijar_nivel_int(NIVEL_3);
+	for (i = 0; i < NUM_MUT; i++){
+		if(array_mutex[i].nombre != NULL && strcmp(array_mutex[i].nombre, p_proc_actual->array_mutex_proceso[mutexId]->nombre) == 0){
+			// Mutex encontrado
+			array_mutex[i].procesos[p_proc_actual->id] = 0;
+			break;
+		}
+	}
+	fijar_nivel_int(nivel_interrupciones);
+
+	// Elimina mutex local abierto
+	p_proc_actual->numMutex--;
+	p_proc_actual->array_mutex_proceso[mutexId] = NULL;
+
+	return 0;
 }
 
 int sis_lock(){
@@ -591,10 +717,6 @@ int sis_lock(){
 }
 
 int sis_unlock(){
-	return 0;
-}
-
-int sis_cerrar_mutex(){
 	return 0;
 }
 
@@ -617,10 +739,6 @@ int sis_leer_caracter(){
 			fijar_nivel_int(nivel_interrupciones);
 		}
 		else{
-			//int nivel_interrupciones = fijar_nivel_int(NIVEL_3);
-			//accesoParam = 1;
-			//fijar_nivel_int(nivel_interrupciones);
-
 			int i;
 			// Solicita el primer caracter del buffer
 			int nivel_interrupciones = fijar_nivel_int(NIVEL_2);
