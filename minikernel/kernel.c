@@ -610,9 +610,7 @@ int sis_crear_mutex(){
 
 	}
 
-	// Crea nuevo mutex
-	int nivel_interrupciones = fijar_nivel_int(NIVEL_3);
-	// Busca espacio libre para nuevo mutex
+	// Busca espacio libre para crear nuevo mutex
 	int posMutex;
 	for (i = 0; i < NUM_MUT; i++){
 		if(array_mutex[i].nombre == NULL){
@@ -625,7 +623,6 @@ int sis_crear_mutex(){
 	}
 	
 	mutexExistentes++;
-	fijar_nivel_int(nivel_interrupciones);
 
 	// Busca descriptor libre para mutex
 	int df = -4; // Descriptor
