@@ -40,6 +40,7 @@ typedef struct{
     char *nombre; 	// nombre del mutex
 	int tipo;		// tipo del mutex (no recursivo = 0, recursivo = 1)
 	int procesos[MAX_PROC]; // Procesos con el mutex abierto
+	int procesosBloqueados[MAX_PROC]; // Procesos bloqueados en el mutex
 } mutex;
 
 typedef struct BCP_t {
@@ -59,7 +60,7 @@ typedef struct BCP_t {
 	int bloqueadoPorLectura;/* 1 indica que esta bloqueado por lectura de caracter */
 	int bloqueadoCreandoMutex;/* 1 indica que esta bloqueado por crear mutex */
 	mutex *array_mutex_proceso[NUM_MUT_PROC]; /* Array de mutex del proceso */
-
+	char *bloqueadoPorMutex; /* Indica el mutex que tiene bloqueado al proceso */
 } BCP;
 
 /*
