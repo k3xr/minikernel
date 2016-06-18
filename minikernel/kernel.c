@@ -162,20 +162,23 @@ static void liberar_proceso(){
 					array_mutex[j].nombre = NULL;
 
 					// Desbloquea procesos esperando para crear mutex
+
 					BCP *procesoADesbloquear = lista_bloqueados.primero;
 					BCP *procesoSiguiente = NULL;
 					if(procesoADesbloquear != NULL){
 						procesoSiguiente = procesoADesbloquear->siguiente;
 					}
 
-					while(procesoADesbloquear != NULL && procesoADesbloquear->bloqueadoCreandoMutex == 1){
-						procesoADesbloquear->estado = LISTO;
-						procesoADesbloquear->bloqueadoCreandoMutex = 0;
-						int nivel_interrupciones = fijar_nivel_int(NIVEL_3);
-						eliminar_elem(&lista_bloqueados, procesoADesbloquear);
-						insertar_ultimo(&lista_listos, procesoADesbloquear);
-						fijar_nivel_int(nivel_interrupciones);
+					while(procesoADesbloquear != NULL){
 
+						if(procesoADesbloquear->bloqueadoCreandoMutex == 1){
+							procesoADesbloquear->estado = LISTO;
+							procesoADesbloquear->bloqueadoCreandoMutex = 0;
+							int nivel_interrupciones = fijar_nivel_int(NIVEL_3);
+							eliminar_elem(&lista_bloqueados, procesoADesbloquear);
+							insertar_ultimo(&lista_listos, procesoADesbloquear);
+							fijar_nivel_int(nivel_interrupciones);
+						}
 						procesoADesbloquear = procesoSiguiente;
 						if(procesoADesbloquear != NULL){
 							procesoSiguiente = procesoADesbloquear->siguiente;
@@ -327,29 +330,39 @@ static void int_reloj(){
 		}
 	}
 
-	BCP *proceso_bloqueado = lista_bloqueados.primero;
-
 	// Incrementa contador de llamadas a int_reloj
 	numTicks++;
-	
-	// Comprueba si hay procesos que se pueden desbloquear
-	if (proceso_bloqueado != NULL) {
 
-		// Calculo de tiempo de bloqueo
-		int numTicksBloqueo = proceso_bloqueado->secs_bloqueo * TICK;
-		int ticksTranscurridos = numTicks - proceso_bloqueado->inicio_bloqueo;
+	// Comprueba si hay procesos que se pueden desbloquear
+	BCP *procesoADesbloquear = lista_bloqueados.primero;
+	BCP *procesoSiguiente = NULL;
+	if(procesoADesbloquear != NULL){
+		procesoSiguiente = procesoADesbloquear->siguiente;
+	}
+
+	while(procesoADesbloquear != NULL){
 		
+		// Calculo de tiempo de bloqueo
+		int numTicksBloqueo = procesoADesbloquear->secs_bloqueo * TICK;
+		int ticksTranscurridos = numTicks - procesoADesbloquear->inicio_bloqueo;
+
 		// Comprueba si el proceso se debe desbloquear
 		if(ticksTranscurridos >= numTicksBloqueo && 
-				proceso_bloqueado->bloqueadoPorLectura == 0 &&
-				proceso_bloqueado->bloqueadoCreandoMutex == 0){
-			proceso_bloqueado->estado = LISTO;
+				procesoADesbloquear->bloqueadoPorLectura == 0 &&
+				procesoADesbloquear->bloqueadoCreandoMutex == 0){
 
 			// Proceso de desbloquea y pasa a estado listo
+			procesoADesbloquear->estado = LISTO;
+
 			int nivel_interrupciones = fijar_nivel_int(NIVEL_3);
-			eliminar_elem(&lista_bloqueados, proceso_bloqueado);
-			insertar_ultimo(&lista_listos, proceso_bloqueado);
-			fijar_nivel_int(nivel_interrupciones);
+			eliminar_elem(&lista_bloqueados, procesoADesbloquear);
+			insertar_ultimo(&lista_listos, procesoADesbloquear);
+			fijar_nivel_int(nivel_interrupciones);	
+		}
+
+		procesoADesbloquear = procesoSiguiente;
+		if(procesoADesbloquear != NULL){
+			procesoSiguiente = procesoADesbloquear->siguiente;
 		}
 	}
     return;
@@ -600,7 +613,6 @@ int sis_crear_mutex(){
 				return -3;
 			}
 		}
-
 	}
 
 	// Busca espacio libre para crear nuevo mutex

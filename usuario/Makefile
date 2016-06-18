@@ -17,7 +17,7 @@ BIBLIOTECA=$(LIBDIR)/libserv.a
 CC=cc
 CFLAGS=-Wall -fPIC -Werror -g -I$(INCLUDEDIR)
 
-PROGRAMAS=init excep_arit excep_mem simplon prueba_dormir prueba_tiempos dormilon prueba_mutex1 creador1 creador2 creador3 creador4 abridor prueba_mutex2 mutex1 mutex2 prueba_RR1 yosoy prueba_RR2 mudo prueba_term lector
+PROGRAMAS=init excep_arit excep_mem simplon prueba_dormir prueba_tiempos dormilon prueba_mutex1 creador1 creador2 creador3 creador4 creador5 abridor prueba_mutex2 mutex1 mutex2 prueba_RR1 yosoy prueba_RR2 mudo prueba_term lector
 
 all: biblioteca $(PROGRAMAS)
 
@@ -71,6 +71,10 @@ creador3: creador3.o $(BIBLIOTECA)
 creador4.o: $(INCLUDEDIR)/servicios.h
 creador4: creador4.o $(BIBLIOTECA)
 	$(CC) $(LDFLAGS) -shared -o $@ creador4.o -L$(LIBDIR) -lserv
+
+creador5.o: $(INCLUDEDIR)/servicios.h
+creador5: creador5.o $(BIBLIOTECA)
+	$(CC) $(LDFLAGS) -shared -o $@ creador5.o -L$(LIBDIR) -lserv
 
 abridor.o: $(INCLUDEDIR)/servicios.h
 abridor: abridor.o $(BIBLIOTECA)

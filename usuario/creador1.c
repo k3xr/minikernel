@@ -33,7 +33,7 @@ int main(){
 		printf("error creando m4. NO DEBE SALIR\n");
 
 	printf("creador1 duerme 1 segundo\n");
-	dormir(1);
+	dormir(10);
 
 	printf("creador1 termina\n");
 
