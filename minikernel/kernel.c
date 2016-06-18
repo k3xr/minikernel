@@ -105,7 +105,7 @@ static void eliminar_elem(lista_BCPs *lista, BCP * proc){
 static void espera_int(){
 	int nivel;
 
-	printk("-> NO HAY LISTOS. ESPERA INT\n");
+	//printk("-> NO HAY LISTOS. ESPERA INT\n");
 
 	/* Baja al mínimo el nivel de interrupción mientras espera */
 	nivel=fijar_nivel_int(NIVEL_1);
@@ -309,7 +309,7 @@ static void int_terminal(){
  */
 static void int_reloj(){
 
-	printk("-> TRATANDO INT. DE RELOJ\n");
+	//printk("-> TRATANDO INT. DE RELOJ\n");
 
 	BCP *proceso_listo = lista_listos.primero;
 	
@@ -649,7 +649,7 @@ int sis_abrir_mutex(){
 	
 	int i;
 	int posMutex = -2;
-	int nivel_interrupciones = fijar_nivel_int(NIVEL_3);
+	
 	for (i = 0; i < NUM_MUT; i++){
 		if(array_mutex[i].nombre != NULL && strcmp(array_mutex[i].nombre, nombre) == 0){
 			// Mutex encontrado
@@ -675,8 +675,6 @@ int sis_abrir_mutex(){
 		}
 	}
 
-	fijar_nivel_int(nivel_interrupciones);
-
 	return df;
 }
 
@@ -692,7 +690,6 @@ int sis_cerrar_mutex(){
 	
 	// Elimina contador de mutex abierto en proceso en array global de mutex
 	int i;
-	int nivel_interrupciones = fijar_nivel_int(NIVEL_3);
 	for (i = 0; i < NUM_MUT; i++){
 		if(array_mutex[i].nombre != NULL && strcmp(array_mutex[i].nombre, p_proc_actual->array_mutex_proceso[mutexId]->nombre) == 0){
 			// Mutex encontrado
@@ -700,7 +697,6 @@ int sis_cerrar_mutex(){
 			break;
 		}
 	}
-	fijar_nivel_int(nivel_interrupciones);
 
 	// Elimina mutex local abierto
 	p_proc_actual->numMutex--;
