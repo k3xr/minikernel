@@ -1,0 +1,2 @@
+# minikernel
+Kernel simplificado
